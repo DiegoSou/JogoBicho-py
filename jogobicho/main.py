@@ -1,15 +1,4 @@
-# Como jogar:
-
-# Você vai jogar em um número de 1 a 25 que representa as dezenas dos bixos
-# O milhar sorteado vai de 0001 até 9999
-# Se alguma dezena do milhar sorteado tiver o animal do grupo que você apostou, vc ganha
-
-# Na dupla você escolhe 2 grupos para apostar na mesma dezena
-# 1 real paga 20 reais (do 1º ao 5º premio)
-# Apessoa que apostou na dupla procura entre os 5 resultados os seus animais (precisam estar os dois)
-
-import database.animals as db
-import controls.maincontrols as c
+import animals as db
 
 from pandas import DataFrame
 from pandas import Series
@@ -17,10 +6,12 @@ from pandas import read_csv
 from pandas import isna
 
 from random import random
+from IPython.display import display
 
-APOSTAS_CSV = './resources/apostas.csv'
+APOSTAS_CSV = '../resources/apostas.csv'
 nMilhares = 5
 
+# Method
 def gerarMilhares():
     results = Series()
     
@@ -29,6 +20,7 @@ def gerarMilhares():
 
     return results
 
+# Method
 def gerarResultados():
     result_df = DataFrame()
 
@@ -52,6 +44,7 @@ def gerarResultados():
     result_df.index = indexPremios
     return result_df
 
+# Method
 def gerarApostas():
     apostas_df = read_csv(APOSTAS_CSV)
 
@@ -88,51 +81,78 @@ def gerarApostas():
     del apostas_df['Nome']
     return apostas_df
 
-    
-apostas_df = gerarApostas()
-resultados_df = gerarResultados()
+# Method
+def gerarEstatisticasResultado(resultados_df, apostas_df, resultados_gerais_df):
 
-for nomePessoa in apostas_df.index:
-    # Cria colunas para cada apostador
-    resultados_df[nomePessoa] = Series()
+    temp_df = DataFrame()
 
-    # Relaciona com o resultado
-    # Compara as tabelas para saber o tipo da aposta
-    for index in resultados_df.index:
-        resultadoAnimal = resultados_df['Resultado'][index]
+    for nomePessoa in apostas_df.index:
 
-        if (not 
-                apostas_df['Aposta Normal'][nomePessoa] == resultadoAnimal
-            and
-            not
-                apostas_df['Aposta Dupla'][nomePessoa] == resultadoAnimal 
+        # Cria colunas para cada apostador
+        resultados_df[nomePessoa] = Series()
 
-        ): continue
-        
-        if (apostas_df['Tipo'][nomePessoa] == 'normal'):
-            resultados_df[nomePessoa][index] = 1
+        # Relaciona com o resultado
+        for indexPremio in resultados_df.index:
+            resultadoAnimal = resultados_df['Resultado'][indexPremio]
 
-        elif (apostas_df['Tipo'][nomePessoa] == 'dupla'):
-            if (apostas_df['Aposta Normal'][nomePessoa] == resultadoAnimal) :
-                apostas_df['Aposta Normal'][nomePessoa] = '(x) '+ apostas_df['Aposta Normal'][nomePessoa]
-
-            if  (apostas_df['Aposta Dupla'][nomePessoa] == resultadoAnimal) :
-                apostas_df['Aposta Dupla'][nomePessoa] = '(x) '+ apostas_df['Aposta Dupla'][nomePessoa]
-
-            if (
-                apostas_df['Aposta Normal'][nomePessoa][:3] == '(x)'
+            # Checa as colunas de aposta para saber se o animal do resultado é o mesmo
+            if (not 
+                    apostas_df['Aposta Normal'][nomePessoa] == resultadoAnimal
                 and
-                apostas_df['Aposta Dupla'][nomePessoa][:3] == '(x)'
-            ): resultados_df[nomePessoa][index] = 3.0
+                not
+                    apostas_df['Aposta Dupla'][nomePessoa] == resultadoAnimal 
 
+            ): continue
             
-print(apostas_df)
-print(resultados_df)
+            # Caso seja, checa o tipo da aposta para saber qual pontuação levar
+            if (apostas_df['Tipo'][nomePessoa] == 'normal'):
+                resultados_df[nomePessoa][indexPremio] = 1
+                temp_df[nomePessoa] = resultados_df[nomePessoa]
+
+            elif (apostas_df['Tipo'][nomePessoa] == 'dupla'):
+                if (apostas_df['Aposta Normal'][nomePessoa] == resultadoAnimal) :
+                    apostas_df['Aposta Normal'][nomePessoa] = '(x) '+ apostas_df['Aposta Normal'][nomePessoa]
+
+                if (apostas_df['Aposta Dupla'][nomePessoa] == resultadoAnimal) :
+                    apostas_df['Aposta Dupla'][nomePessoa] = '(x) '+ apostas_df['Aposta Dupla'][nomePessoa]
+
+                if (apostas_df['Aposta Normal'][nomePessoa][:3] == '(x)'
+                    and
+                    apostas_df['Aposta Dupla'][nomePessoa][:3] == '(x)'
+                ): 
+                    resultados_df[nomePessoa][indexPremio] = 3.0
+                    temp_df[nomePessoa] = resultados_df[nomePessoa]
+        
+        if nomePessoa in temp_df:
+            for pontuacao in temp_df[nomePessoa]:
+                if isna(pontuacao): continue
+
+                if nomePessoa in resultados_gerais_df:
+                    resultados_gerais_df[nomePessoa].apply(
+                        lambda x: (int(x) + int(pontuacao)) if not isna(x) else (int(pontuacao)) 
+                    )
+
+                else:
+                    resultados_gerais_df[nomePessoa] = temp_df[nomePessoa]
+            
+    return resultados_gerais_df
+
+# Method
+def gerarResultadosGerais():
+    resultados_gerais = DataFrame()
+
+    for i in range(5):
+        apostas_df = gerarApostas()
+        resultados_df = gerarResultados()
+        resultados_gerais = gerarEstatisticasResultado(resultados_df, apostas_df, resultados_gerais)
+        
+        display(apostas_df)
+        display(resultados_df)
+        display(resultados_gerais)
+                
 
 
-# Análises
-# Quantas vezes deu determinado animal
-# Quantas vezes deu determinada dupla
-# Relação animal / premio
-# Pontuação geral
+
+
+
 
