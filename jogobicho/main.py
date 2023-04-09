@@ -1,33 +1,30 @@
 import animals as db
 
-from pandas import DataFrame
-from pandas import Series
-from pandas import read_csv
-from pandas import isna
+from pandas import DataFrame, Series
+from pandas import read_csv, isna
 
-from random import random
 from IPython.display import display
+from random import random
 
 APOSTAS_CSV = '../resources/apostas.csv'
-nMilhares = 5
+n_milhares = 5
 
 # Method
-def gerarMilhares():
+def gerar_milhares():
     results = Series()
-    
-    for n in range(nMilhares): 
+    for n in range(n_milhares): 
         results[str(n)] = str(random())[4:8]
 
     return results
 
 # Method
-def gerarResultados():
+def gerar_resultados():
     result_df = DataFrame()
 
     # Sorteia os números de acordo com o range definido no início
-    result_df['Milhar_Sorteado'] = gerarMilhares()
+    result_df['Milhar_Sorteado'] = gerar_milhares()
+    
     result_df['Resultado'] = Series()
-
     indexPremios = Series(result_df.index)
 
     for i in indexPremios:
@@ -45,7 +42,7 @@ def gerarResultados():
     return result_df
 
 # Method
-def gerarApostas():
+def gerar_apostas():
     apostas_df = read_csv(APOSTAS_CSV)
 
     # Aplica os zeros ao começo das milhas apostadas
@@ -82,12 +79,11 @@ def gerarApostas():
     return apostas_df
 
 # Method
-def gerarEstatisticasResultado(resultados_df, apostas_df, resultados_gerais_df):
+def gerar_estatisticasResultado(resultados_df, apostas_df, resultados_gerais_df):
 
     temp_df = DataFrame()
 
     for nomePessoa in apostas_df.index:
-
         # Cria colunas para cada apostador
         resultados_df[nomePessoa] = Series()
 
@@ -137,22 +133,18 @@ def gerarEstatisticasResultado(resultados_df, apostas_df, resultados_gerais_df):
             
     return resultados_gerais_df
 
+
 # Method
-def gerarResultadosGerais():
+def gerar_resultadosGerais():
     resultados_gerais = DataFrame()
 
     for i in range(5):
-        apostas_df = gerarApostas()
-        resultados_df = gerarResultados()
-        resultados_gerais = gerarEstatisticasResultado(resultados_df, apostas_df, resultados_gerais)
+        apostas_df = gerar_apostas()
+        resultados_df = gerar_resultados()
+        resultados_gerais = gerar_estatisticasResultado(resultados_df, apostas_df, resultados_gerais)
         
         display(apostas_df)
         display(resultados_df)
         display(resultados_gerais)
                 
-
-
-
-
-
 
